@@ -1,0 +1,10 @@
+Simple File Encryption / decryption For Bash By J~Net 2025
+
+1.
+sudo chmod +x *.sh
+
+2
+./setup.sh
+
+3.
+./enc.sh
