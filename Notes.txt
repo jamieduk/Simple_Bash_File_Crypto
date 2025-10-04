@@ -8,3 +8,15 @@ sudo chmod +x *.sh
 
 3.
 ./enc.sh
+
+
+
+Please Note!
+
+To decrypt, you only need:
+
+private_key.pem → your RSA private key (kept secret)
+
+rsa_encrypted.bin → the RSA-encrypted AES key
+
+encrypted_aes.bin → the AES-encrypted data

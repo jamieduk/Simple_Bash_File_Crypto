@@ -43,6 +43,11 @@ encrypt_file(){
 }
 
 decrypt_file(){
+  if [ ! -f private_key.pem ]; then
+    echo "Error: private_key.pem not found! Please generate keys first using option 1."
+    return
+  fi
+
   read -p "Enter RSA-encrypted key file [default: rsa_encrypted.bin]: " rsa_file
   rsa_file=${rsa_file:-rsa_encrypted.bin}
   [ ! -f "$rsa_file" ] && { echo "File '$rsa_file' not found!"; return; }
@@ -51,18 +56,20 @@ decrypt_file(){
   aes_file=${aes_file:-encrypted_aes.bin}
   [ ! -f "$aes_file" ] && { echo "File '$aes_file' not found!"; return; }
 
-  # Decrypted AES key
-  openssl rsautl -decrypt -inkey private_key.pem -in "$rsa_file" -out decrypted_key.bin
+  echo "Decrypting AES key..."
+  openssl rsautl -decrypt -inkey private_key.pem -in "$rsa_file" -out decrypted_key.bin || { echo "Error: Failed to decrypt AES key."; rm -f decrypted_key.bin; return; }
 
-  # Decrypted plaintext
   output_file="decrypted_plaintext.txt"
   [ -f "$output_file" ] && read -p "$output_file exists. Overwrite? [y/N]: " ans && [[ $ans != [yY] ]] && return
-  openssl enc -d -aes-256-cbc -in "$aes_file" -out "$output_file" -pass file:./decrypted_key.bin
+
+  echo "Decrypting file..."
+  openssl enc -d -aes-256-cbc -in "$aes_file" -out "$output_file" -pass file:./decrypted_key.bin || { echo "Error: Failed to decrypt file."; rm -f decrypted_key.bin; return; }
 
   rm -f decrypted_key.bin
   echo "Decryption complete!"
   echo "Decrypted output: $output_file"
 }
+
 
 while true; do
   echo ""
