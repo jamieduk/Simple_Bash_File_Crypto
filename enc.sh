@@ -12,7 +12,17 @@ generate_keys(){
 }
 
 encrypt_file(){
-  read -p "Enter plaintext file to encrypt [default: plaintext.txt]: " plaintext
+    if [ ! -f private_key.pem ]; then
+      echo "Error: private_key.pem not found! Please generate keys first using option 1."
+      return
+    fi
+
+    if [ ! -f public_key.pem ]; then
+      echo "Error: public_key.pem not found! Please generate keys first using option 1."
+      return
+    fi
+    
+  read -p "Enter file to encrypt [default: plaintext.txt]: " plaintext
   plaintext=${plaintext:-plaintext.txt}
   [ ! -f "$plaintext" ] && { echo "File '$plaintext' not found!"; return; }
 
