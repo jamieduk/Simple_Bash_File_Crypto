@@ -12,14 +12,16 @@ generate_keys(){
 }
 
 encrypt_file(){
-  if [ ! -f private_key.pem ];then
-    echo "Error: private_key.pem not found! Please generate keys first using option 1."
-    return
-  fi
-  if [ ! -f public_key.pem ];then
-    echo "Error: public_key.pem not found! Please generate keys first using option 1."
-    return
-  fi
+    if [ ! -f private_key.pem ]; then
+      echo "Error: private_key.pem not found! Please generate keys first using option 1."
+      return
+    fi
+
+    if [ ! -f public_key.pem ]; then
+      echo "Error: public_key.pem not found! Please generate keys first using option 1."
+      return
+    fi
+    
   read -p "Enter file to encrypt [default: plaintext.txt]: " plaintext
   plaintext=${plaintext:-plaintext.txt}
   [ ! -f "$plaintext" ] && { echo "File '$plaintext' not found!"; return; }
@@ -27,11 +29,13 @@ encrypt_file(){
   echo "Generating random AES key..."
   openssl rand -out aes_key.bin 32
 
+  # RSA-encrypted AES key
   [ -f rsa_encrypted.bin ] && read -p "rsa_encrypted.bin exists. Overwrite? [y/N]: " ans && [[ $ans != [yY] ]] && return
-  openssl pkeyutl -encrypt -pubin -inkey public_key.pem -in aes_key.bin -out rsa_encrypted.bin
+  openssl rsautl -encrypt -inkey public_key.pem -pubin -in aes_key.bin -out rsa_encrypted.bin
 
+  # AES-encrypted plaintext
   [ -f encrypted_aes.bin ] && read -p "encrypted_aes.bin exists. Overwrite? [y/N]: " ans && [[ $ans != [yY] ]] && return
-  openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -in "$plaintext" -out encrypted_aes.bin -pass file:./aes_key.bin
+  openssl enc -aes-256-cbc -in "$plaintext" -out encrypted_aes.bin -pass file:./aes_key.bin
 
   rm -f aes_key.bin
   echo "Encryption complete!"
@@ -39,7 +43,7 @@ encrypt_file(){
 }
 
 decrypt_file(){
-  if [ ! -f private_key.pem ];then
+  if [ ! -f private_key.pem ]; then
     echo "Error: private_key.pem not found! Please generate keys first using option 1."
     return
   fi
@@ -53,20 +57,21 @@ decrypt_file(){
   [ ! -f "$aes_file" ] && { echo "File '$aes_file' not found!"; return; }
 
   echo "Decrypting AES key..."
-  openssl pkeyutl -decrypt -inkey private_key.pem -in "$rsa_file" -out decrypted_key.bin || { echo "Error: Failed to decrypt AES key."; rm -f decrypted_key.bin; return; }
+  openssl rsautl -decrypt -inkey private_key.pem -in "$rsa_file" -out decrypted_key.bin || { echo "Error: Failed to decrypt AES key."; rm -f decrypted_key.bin; return; }
 
   output_file="decrypted_file"
   [ -f "$output_file" ] && read -p "$output_file exists. Overwrite? [y/N]: " ans && [[ $ans != [yY] ]] && return
 
   echo "Decrypting file..."
-  openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -in "$aes_file" -out "$output_file" -pass file:./decrypted_key.bin || { echo "Error: Failed to decrypt file."; rm -f decrypted_key.bin; return; }
+  openssl enc -d -aes-256-cbc -in "$aes_file" -out "$output_file" -pass file:./decrypted_key.bin || { echo "Error: Failed to decrypt file."; rm -f decrypted_key.bin; return; }
 
   rm -f decrypted_key.bin
   echo "Decryption complete!"
   echo "Decrypted output: $output_file"
 }
 
-while true;do
+
+while true; do
   echo ""
   echo "=============================="
   echo "   J~Net Encryption Utility"
@@ -77,6 +82,7 @@ while true;do
   echo "4) Exit"
   echo "------------------------------"
   read -p "Select option [1-4]: " choice
+
   case $choice in
     1) generate_keys ;;
     2) encrypt_file ;;
