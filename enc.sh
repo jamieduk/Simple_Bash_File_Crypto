@@ -59,7 +59,7 @@ decrypt_file(){
   echo "Decrypting AES key..."
   openssl rsautl -decrypt -inkey private_key.pem -in "$rsa_file" -out decrypted_key.bin || { echo "Error: Failed to decrypt AES key."; rm -f decrypted_key.bin; return; }
 
-  output_file="decrypted_plaintext.txt"
+  output_file="decrypted_file"
   [ -f "$output_file" ] && read -p "$output_file exists. Overwrite? [y/N]: " ans && [[ $ans != [yY] ]] && return
 
   echo "Decrypting file..."
